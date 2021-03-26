@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,10 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '&#y#ctvk)tu5_bt^k9q4(55u7d6of@i1t8yis7k2z-+s-6bnf#'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG')
 
 ALLOWED_HOSTS = []
 
@@ -37,7 +39,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'graphene_django',
+    'user_control',
 ]
+AUTH_USER_MODEL="user_control.User"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -73,10 +78,21 @@ WSGI_APPLICATION = 'saft_webapp.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+DB_NAME=config('DB_NAME')
+DB_USER=config('DB_USER')
+DB_PASSWORD=config('DB_PASSWORD')
+DB_HOST=config('DB_HOST')
+DB_PORT=config('DB_PORT')
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2', 
+        'NAME':DB_NAME,
+        'USER':DB_USER,
+        'PASSWORD':DB_PASSWORD,
+        'HOST':DB_HOST,
+        'PORT':DB_PORT,
     }
 }
 
@@ -114,7 +130,43 @@ USE_L10N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.1/howto/static-files/
+S3_BUCKET_URL = config('S3_BUCKET_URL')
+STATIC_ROOT = 'staticfiles'
 
-STATIC_URL = '/static/'
+AWS_ACCESS_KEY_ID = config('AWS_S3_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = config('AWS_S3_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
+AWS_HOST_REGION = config('AWS_HOST_REGION')
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+AWS_DEFAULT_ACL = None
+
+AWS_LOCATION = 'static'
+
+MEDIA_URL = '/media/'
+
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'saft_webapp/static'),
+]
+STATIC_URL = 'https://%s/%s/' % (AWS_S3_CUSTOM_DOMAIN, AWS_LOCATION)
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+
+DEFAULT_FILE_STORAGE = 'saft_webapp.storage_backends.MediaStorage'
+
+
+GRAPHENE = {
+    'SCHEMA': 'saft_webapp.schema.schema',
+    'MIDDLEWARE': [
+        'saft_webapp.middlewares.CustomAuthMiddleware',
+        'saft_webapp.middlewares.CustomPaginationMiddleware'
+    ],
+    'PAGE_SIZE': 20
+}
+
+CORS_ALLOW_ALL_ORIGINS = True
+

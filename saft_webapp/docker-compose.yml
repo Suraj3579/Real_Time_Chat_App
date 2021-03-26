@@ -1,0 +1,18 @@
+version: "3"
+
+services: 
+  web:
+    build: .
+    command: bash -c "python manage.py runserver 0.0.0.0:8000"
+    container_name: saft_webapp
+    restart: always
+    volumes:
+      - .:/saft_webapp
+    ports:
+      - "8000:8000"
+    networks:
+      - "saft_webapp_net"
+
+networks:
+  saft_webapp_net:
+    driver: bridge

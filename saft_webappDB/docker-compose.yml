@@ -1,0 +1,23 @@
+version: "3"
+
+services:
+  postgres:
+    container_name: saft_webappDB
+    image: postgres
+    environment:
+      POSTGRES_USER: "saft_webapp_user"
+      POSTGRES_PASSWORD: "saft_webapp_password"
+      PGDATE: data/saft_webapp_postgres
+    volumes:
+      - postgres:/data/saft_webapp_postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - saft_webapp_net
+
+networks:
+  saft_webapp_net:
+    driver: bridge
+
+volumes:
+    postgres:
